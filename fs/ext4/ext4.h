@@ -1045,6 +1045,9 @@ struct ext4_inode_info {
 	ext4_lblk_t i_da_metadata_calc_last_lblock;
 	int i_da_metadata_calc_len;
 
+	/* pending cluster reservations for bigalloc file systems */
+	struct ext4_pending_tree i_pending_tree;
+
 	/* on-disk additional length */
 	__u16 i_extra_isize;
 
@@ -3339,6 +3342,7 @@ extern int ext4_swap_extents(handle_t *handle, struct inode *inode1,
 				struct inode *inode2, ext4_lblk_t lblk1,
 			     ext4_lblk_t lblk2,  ext4_lblk_t count,
 			     int mark_unwritten,int *err);
+extern int ext4_clu_mapped(struct inode *inode, ext4_lblk_t lclu);
 
 /* move_extent.c */
 extern void ext4_double_down_write_data_sem(struct inode *first,
