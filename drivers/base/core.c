@@ -838,7 +838,7 @@ late_initcall(sync_state_resume_initcall);
 
 static void __device_links_supplier_defer_sync(struct device *sup)
 {
-	if (list_empty(&sup->links.defer_hook))
+	if (list_empty(&sup->links.defer_hook) && dev_has_sync_state(sup))
 		list_add_tail(&sup->links.defer_hook, &deferred_sync);
 }
 
