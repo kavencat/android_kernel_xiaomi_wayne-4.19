@@ -24,6 +24,10 @@
 #include "qdf_trace.h"
 #include "qdf_types.h"
 
+#include "wlan_hdd_misc.h"
+
+static char *wlan_cfg_buf;
+
 QDF_STATUS qdf_ini_parse(const char *ini_path, void *context,
 			 qdf_ini_item_cb item_cb, qdf_ini_section_cb section_cb)
 {
@@ -31,10 +35,16 @@ QDF_STATUS qdf_ini_parse(const char *ini_path, void *context,
 	char *fbuf;
 	char *cursor;
 
-	status = qdf_file_read(ini_path, &fbuf);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		qdf_err("Failed to read *.ini file @ %s", ini_path);
-		return status;
+	if (strcmp(ini_path, WLAN_INI_FILE) == 0) {
+		pr_info("qcacld: loading overridden WLAN_INI_FILE\n");
+		fbuf = wlan_cfg_buf;
+		status = QDF_STATUS_SUCCESS;
+	} else {
+		status = qdf_file_read(ini_path, &fbuf);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			qdf_err("Failed to read *.ini file @ %s", ini_path);
+			return status;
+		}
 	}
 
 	/* foreach line */
