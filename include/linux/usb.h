@@ -580,6 +580,7 @@ struct usb3_lpm_parameters {
  * @ep0: endpoint 0 data (default control pipe)
  * @dev: generic device interface
  * @descriptor: USB device descriptor
+ * @reset_in_progress: the device is being reset
  * @bos: USB device BOS descriptor set
  * @config: all of the device's configs
  * @actconfig: the active configuration
@@ -675,6 +676,7 @@ struct usb_device {
 
 	unsigned can_submit:1;
 	unsigned persist_enabled:1;
+	unsigned reset_in_progress:1;
 	unsigned have_langid:1;
 	unsigned authorized:1;
 	unsigned authenticated:1;

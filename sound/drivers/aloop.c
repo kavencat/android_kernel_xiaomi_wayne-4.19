@@ -150,7 +150,7 @@ static inline unsigned int frac_pos(struct loopback_pcm *dpcm, unsigned int x)
 static inline struct loopback_setup *get_setup(struct loopback_pcm *dpcm)
 {
 	int device = dpcm->substream->pstr->pcm->device;
-	
+
 	if (dpcm->substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
 		device ^= 1;
 	return &dpcm->loopback->setup[dpcm->substream->number][device];
@@ -273,7 +273,7 @@ static int loopback_trigger(struct snd_pcm_substream *substream, int cmd)
 		dpcm->last_jiffies = jiffies;
 		dpcm->pcm_rate_shift = 0;
 		dpcm->last_drift = 0;
-		spin_lock(&cable->lock);	
+		spin_lock(&cable->lock);
 		cable->running |= stream;
 		cable->pause &= ~stream;
 		loopback_timer_start(dpcm);
@@ -282,7 +282,7 @@ static int loopback_trigger(struct snd_pcm_substream *substream, int cmd)
 			loopback_active_notify(dpcm);
 		break;
 	case SNDRV_PCM_TRIGGER_STOP:
-		spin_lock(&cable->lock);	
+		spin_lock(&cable->lock);
 		cable->running &= ~stream;
 		cable->pause &= ~stream;
 		loopback_timer_stop(dpcm);
@@ -292,7 +292,7 @@ static int loopback_trigger(struct snd_pcm_substream *substream, int cmd)
 		break;
 	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
 	case SNDRV_PCM_TRIGGER_SUSPEND:
-		spin_lock(&cable->lock);	
+		spin_lock(&cable->lock);
 		cable->pause |= stream;
 		loopback_timer_stop(dpcm);
 		spin_unlock(&cable->lock);
@@ -409,7 +409,7 @@ static void copy_play_buf(struct loopback_pcm *play,
 	/* check if playback is draining, trim the capture copy size
 	 * when our pointer is at the end of playback ring buffer */
 	if (runtime->status->state == SNDRV_PCM_STATE_DRAINING &&
-	    snd_pcm_playback_hw_avail(runtime) < runtime->buffer_size) { 
+	    snd_pcm_playback_hw_avail(runtime) < runtime->buffer_size) {
 	    	snd_pcm_uframes_t appl_ptr, appl_ptr1, diff;
 		appl_ptr = appl_ptr1 = runtime->control->appl_ptr;
 		appl_ptr1 -= appl_ptr1 % runtime->buffer_size;
@@ -477,23 +477,24 @@ static unsigned int loopback_pos_update(struct loopback_cable *cable)
 			cable->streams[SNDRV_PCM_STREAM_PLAYBACK];
 	struct loopback_pcm *dpcm_capt =
 			cable->streams[SNDRV_PCM_STREAM_CAPTURE];
-	unsigned long delta_play = 0, delta_capt = 0;
+	unsigned long delta_play = 0, delta_capt = 0, cur_jiffies;
 	unsigned int running, count1, count2;
 
+	cur_jiffies = jiffies;
 	running = cable->running ^ cable->pause;
 	if (running & (1 << SNDRV_PCM_STREAM_PLAYBACK)) {
-		delta_play = jiffies - dpcm_play->last_jiffies;
+		delta_play = cur_jiffies - dpcm_play->last_jiffies;
 		dpcm_play->last_jiffies += delta_play;
 	}
 
 	if (running & (1 << SNDRV_PCM_STREAM_CAPTURE)) {
-		delta_capt = jiffies - dpcm_capt->last_jiffies;
+		delta_capt = cur_jiffies - dpcm_capt->last_jiffies;
 		dpcm_capt->last_jiffies += delta_capt;
 	}
 
 	if (delta_play == 0 && delta_capt == 0)
 		goto unlock;
-		
+
 	if (delta_play > delta_capt) {
 		count1 = bytepos_delta(dpcm_play, delta_play - delta_capt);
 		bytepos_finish(dpcm_play, count1);
@@ -801,8 +802,8 @@ static int loopback_pcm_new(struct loopback *loopback,
 	return 0;
 }
 
-static int loopback_rate_shift_info(struct snd_kcontrol *kcontrol,   
-				    struct snd_ctl_elem_info *uinfo) 
+static int loopback_rate_shift_info(struct snd_kcontrol *kcontrol,
+				    struct snd_ctl_elem_info *uinfo)
 {
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = 1;
@@ -810,13 +811,13 @@ static int loopback_rate_shift_info(struct snd_kcontrol *kcontrol,
 	uinfo->value.integer.max = 120000;
 	uinfo->value.integer.step = 1;
 	return 0;
-}                                  
+}
 
 static int loopback_rate_shift_get(struct snd_kcontrol *kcontrol,
 				   struct snd_ctl_elem_value *ucontrol)
 {
 	struct loopback *loopback = snd_kcontrol_chip(kcontrol);
-	
+
 	mutex_lock(&loopback->cable_lock);
 	ucontrol->value.integer.value[0] =
 		loopback->setup[kcontrol->id.subdevice]
@@ -836,7 +837,7 @@ static int loopback_rate_shift_put(struct snd_kcontrol *kcontrol,
 	if (val < 80000)
 		val = 80000;
 	if (val > 120000)
-		val = 120000;	
+		val = 120000;
 	mutex_lock(&loopback->cable_lock);
 	if (val != loopback->setup[kcontrol->id.subdevice]
 				  [kcontrol->id.device].rate_shift) {
@@ -852,7 +853,7 @@ static int loopback_notify_get(struct snd_kcontrol *kcontrol,
 			       struct snd_ctl_elem_value *ucontrol)
 {
 	struct loopback *loopback = snd_kcontrol_chip(kcontrol);
-	
+
 	mutex_lock(&loopback->cable_lock);
 	ucontrol->value.integer.value[0] =
 		loopback->setup[kcontrol->id.subdevice]
@@ -900,8 +901,8 @@ static int loopback_active_get(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
-static int loopback_format_info(struct snd_kcontrol *kcontrol,   
-				struct snd_ctl_elem_info *uinfo) 
+static int loopback_format_info(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_info *uinfo)
 {
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = 1;
@@ -909,21 +910,21 @@ static int loopback_format_info(struct snd_kcontrol *kcontrol,
 	uinfo->value.integer.max = SNDRV_PCM_FORMAT_LAST;
 	uinfo->value.integer.step = 1;
 	return 0;
-}                                  
+}
 
 static int loopback_format_get(struct snd_kcontrol *kcontrol,
 			       struct snd_ctl_elem_value *ucontrol)
 {
 	struct loopback *loopback = snd_kcontrol_chip(kcontrol);
-	
+
 	ucontrol->value.integer.value[0] =
 		loopback->setup[kcontrol->id.subdevice]
 			       [kcontrol->id.device].format;
 	return 0;
 }
 
-static int loopback_rate_info(struct snd_kcontrol *kcontrol,   
-			      struct snd_ctl_elem_info *uinfo) 
+static int loopback_rate_info(struct snd_kcontrol *kcontrol,
+			      struct snd_ctl_elem_info *uinfo)
 {
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = 1;
@@ -931,13 +932,13 @@ static int loopback_rate_info(struct snd_kcontrol *kcontrol,
 	uinfo->value.integer.max = 192000;
 	uinfo->value.integer.step = 1;
 	return 0;
-}                                  
+}
 
 static int loopback_rate_get(struct snd_kcontrol *kcontrol,
 			     struct snd_ctl_elem_value *ucontrol)
 {
 	struct loopback *loopback = snd_kcontrol_chip(kcontrol);
-	
+
 	mutex_lock(&loopback->cable_lock);
 	ucontrol->value.integer.value[0] =
 		loopback->setup[kcontrol->id.subdevice]
@@ -946,8 +947,8 @@ static int loopback_rate_get(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
-static int loopback_channels_info(struct snd_kcontrol *kcontrol,   
-				  struct snd_ctl_elem_info *uinfo) 
+static int loopback_channels_info(struct snd_kcontrol *kcontrol,
+				  struct snd_ctl_elem_info *uinfo)
 {
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = 1;
@@ -955,13 +956,13 @@ static int loopback_channels_info(struct snd_kcontrol *kcontrol,
 	uinfo->value.integer.max = 1024;
 	uinfo->value.integer.step = 1;
 	return 0;
-}                                  
+}
 
 static int loopback_channels_get(struct snd_kcontrol *kcontrol,
 				 struct snd_ctl_elem_value *ucontrol)
 {
 	struct loopback *loopback = snd_kcontrol_chip(kcontrol);
-	
+
 	mutex_lock(&loopback->cable_lock);
 	ucontrol->value.integer.value[0] =
 		loopback->setup[kcontrol->id.subdevice]
@@ -1167,7 +1168,7 @@ static int loopback_probe(struct platform_device *devptr)
 		pcm_substreams[dev] = 1;
 	if (pcm_substreams[dev] > MAX_PCM_SUBSTREAMS)
 		pcm_substreams[dev] = MAX_PCM_SUBSTREAMS;
-	
+
 	loopback->card = card;
 	mutex_init(&loopback->cable_lock);
 
@@ -1213,7 +1214,7 @@ static int loopback_suspend(struct device *pdev)
 	snd_pcm_suspend_all(loopback->pcm[1]);
 	return 0;
 }
-	
+
 static int loopback_resume(struct device *pdev)
 {
 	struct snd_card *card = dev_get_drvdata(pdev);
