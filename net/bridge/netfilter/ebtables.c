@@ -1004,8 +1004,10 @@ static int do_replace_finish(struct net *net, struct ebt_replace *repl,
 	}
 
 	/* the table doesn't like it */
-	if (repl->valid_hooks != t->valid_hooks)
+	if (repl->valid_hooks != t->valid_hooks) {
+		ret = -EINVAL;
 		goto free_unlock;
+	}
 
 	if (repl->num_counters && repl->num_counters != t->private->nentries) {
 		ret = -EINVAL;
