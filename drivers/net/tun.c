@@ -756,6 +756,7 @@ static void __tun_detach(struct tun_file *tfile, bool clean)
 		if (tun)
 			xdp_rxq_info_unreg(&tfile->xdp_rxq);
 		ptr_ring_cleanup(&tfile->tx_ring, tun_ptr_free);
+		sock_put(&tfile->sk);
 	}
 }
 
@@ -771,9 +772,6 @@ static void tun_detach(struct tun_file *tfile, bool clean)
 	if (dev)
 		netdev_state_change(dev);
 	rtnl_unlock();
-
-	if (clean)
-		sock_put(&tfile->sk);
 }
 
 static void tun_detach_all(struct net_device *dev)
@@ -1475,8 +1473,7 @@ static struct sk_buff *tun_napi_alloc_frags(struct tun_file *tfile,
 	int err;
 	int i;
 
-	if (it->nr_segs > MAX_SKB_FRAGS + 1 ||
-	    len > (ETH_MAX_MTU - NET_SKB_PAD - NET_IP_ALIGN))
+	if (it->nr_segs > MAX_SKB_FRAGS + 1)
 		return ERR_PTR(-EMSGSIZE);
 
 	local_bh_disable();
@@ -1968,25 +1965,17 @@ drop:
 		headlen = eth_get_headlen(skb->data, skb_headlen(skb));
 
 		if (unlikely(headlen > skb_headlen(skb))) {
-			WARN_ON_ONCE(1);
-			err = -ENOMEM;
 			this_cpu_inc(tun->pcpu_stats->rx_dropped);
-napi_busy:
 			napi_free_frags(&tfile->napi);
 			rcu_read_unlock();
 			mutex_unlock(&tfile->napi_mutex);
-			return err;
+			WARN_ON(1);
+			return -ENOMEM;
 		}
 
-		if (likely(napi_schedule_prep(&tfile->napi))) {
-			local_bh_disable();
-			napi_gro_frags(&tfile->napi);
-			napi_complete(&tfile->napi);
-			local_bh_enable();
-		} else {
-			err = -EBUSY;
-			goto napi_busy;
-		}
+		local_bh_disable();
+		napi_gro_frags(&tfile->napi);
+		local_bh_enable();
 		mutex_unlock(&tfile->napi_mutex);
 	} else if (tfile->napi_enabled) {
 		struct sk_buff_head *queue = &tfile->sk.sk_write_queue;
