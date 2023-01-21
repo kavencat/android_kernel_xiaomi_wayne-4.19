@@ -741,7 +741,7 @@ static int hidg_setup(struct usb_function *f,
 			goto stall;
 		req->complete = hidg_ssreport_complete;
 		req->context  = hidg;
-		goto respond
+		goto respond;
 		break;
 
 	case ((USB_DIR_OUT | USB_TYPE_CLASS | USB_RECIP_INTERFACE) << 8
