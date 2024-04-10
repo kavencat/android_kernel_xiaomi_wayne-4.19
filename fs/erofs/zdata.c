@@ -927,6 +927,8 @@ static void z_erofs_decompress_kickoff(struct z_erofs_decompressqueue *io,
 #else
  		queue_work(z_erofs_workqueue, &io->u.work);
 #endif
+		return
+	}
 	z_erofs_decompressqueue_work(&io->u.work);
 }
 
