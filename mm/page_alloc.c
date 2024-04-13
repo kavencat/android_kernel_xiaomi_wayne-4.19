@@ -4718,7 +4718,7 @@ retry:
 	 * of free memory (see __compaction_suitable)
 	 */
 	if (did_some_progress > 0 && can_compact &&
-			IS_ENABLED(CONFIG_HAVE_LOW_MEMORY_KILLER)) &&
+			IS_ENABLED(CONFIG_HAVE_LOW_MEMORY_KILLER) &&
 			should_compact_retry(ac, order, alloc_flags,
 				compact_result, &compact_priority,
 				&compaction_retries))
