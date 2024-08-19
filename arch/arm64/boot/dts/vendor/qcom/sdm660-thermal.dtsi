@@ -620,7 +620,7 @@
 			};
 		};
 	};
-
+	
 	quiet-therm-step {
 		polling-delay-passive = <2000>;
 		polling-delay = <0>;
