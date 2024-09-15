@@ -1428,7 +1428,7 @@ static bool is_xdp_raw_buffer_queue(struct virtnet_info *vi, int q)
 		return false;
 }
 
-static void virtnet_poll_cleantx(struct receive_queue *rq, int budget)
+static void virtnet_poll_cleantx(struct receive_queue *rq)
 {
 	struct virtnet_info *vi = rq->vq->vdev->priv;
 	unsigned int index = vq2rxq(rq->vq);
@@ -1439,7 +1439,7 @@ static void virtnet_poll_cleantx(struct receive_queue *rq, int budget)
 		return;
 
 	if (__netif_tx_trylock(txq)) {
-		free_old_xmit_skbs(sq, !!budget);
+		free_old_xmit_skbs(sq, true);
 		__netif_tx_unlock(txq);
 	}
 
@@ -1456,7 +1456,7 @@ static int virtnet_poll(struct napi_struct *napi, int budget)
 	unsigned int received;
 	unsigned int xdp_xmit = 0;
 
-	virtnet_poll_cleantx(rq, budget);
+	virtnet_poll_cleantx(rq);
 
 	received = virtnet_receive(rq, budget, &xdp_xmit);
 
@@ -1526,7 +1526,7 @@ static int virtnet_poll_tx(struct napi_struct *napi, int budget)
 	txq = netdev_get_tx_queue(vi->dev, index);
 	__netif_tx_lock(txq, raw_smp_processor_id());
 	virtqueue_disable_cb(sq->vq);
-	free_old_xmit_skbs(sq, !!budget);
+	free_old_xmit_skbs(sq, true);
 
 	opaque = virtqueue_enable_cb_prepare(sq->vq);
 
