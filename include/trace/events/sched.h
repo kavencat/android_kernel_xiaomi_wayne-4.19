@@ -156,6 +156,7 @@ TRACE_EVENT(sched_kthread_work_execute_start,
 	),
 
 	TP_printk("work struct %p: function %ps", __entry->work, __entry->function)
+);
 
 /**
  * sched_kthread_work_execute_end - called immediately after the work callback
