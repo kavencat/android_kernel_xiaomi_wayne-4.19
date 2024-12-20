@@ -931,6 +931,8 @@ static uint32_t wma_get_rsn_wmi_auth_type(int32_t akm)
 		return WMI_AUTH_RSNA_SUITE_B_8021X_SHA256;
 	else if (HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_IEEE8021X_SUITE_B_192))
 		return WMI_AUTH_RSNA_SUITE_B_8021X_SHA384;
+	else if (HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_FT_IEEE8021X_SHA384))
+		return WMI_AUTH_FT_RSNA_SUITE_B_8021X_SHA384;
 	else
 		return WMI_AUTH_NONE;
 }
@@ -1062,7 +1064,7 @@ wma_roam_scan_fill_ap_profile(struct roam_offload_scan_req *roam_req,
 	uint16_t rsn_caps;
 	bool peer_rmf_capable = false;
 	uint32_t num_allowed_authmode = 0;
-	enum wlan_crypto_key_mgmt i;
+	int i;
 
 	qdf_mem_zero(profile, sizeof(*profile));
 	if (!roam_req) {
@@ -1155,7 +1157,6 @@ wma_roam_scan_fill_ap_profile(struct roam_offload_scan_req *roam_req,
 	}
 
 	profile->num_allowed_authmode = num_allowed_authmode;
-
 #endif
 }
 
